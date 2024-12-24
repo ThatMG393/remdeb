@@ -1,3 +1,5 @@
 {
-    "clangd.arguments": []
+    "clangd.arguments": [],
+    "mesonbuild.configureOnOpen": true,
+    "cmake.ignoreCMakeListsMissing": true
 }
