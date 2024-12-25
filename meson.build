@@ -6,22 +6,24 @@ cc = meson.get_compiler('cpp')
 
 libdir = meson.current_source_dir() + './lib/'
 
-dirs = ['src', 'net', 'jni', 'common']
+dirs = ['src', 'net', 'jni', 'impl']
 
 src_files = [
   'src/main.cpp',
 
-  'net/socket.h',
-  'net/socket.cpp',
+  'net/socket/socket.h',
+  'net/socket/socket.cpp',
+  'net/packet/packet.h',
 
   'jni/loader.cpp',
   'jni/utils/android.h',
 
-  'common/starter.h',
-  'common/server/debug_server.h',
-  'common/server/debug_server.cpp',
-  'common/client/debug_client.h',
-  'common/client/debug_client.cpp',
+  'impl/common/starter.h',
+  'impl/server/debug_server.h',
+  'impl/server/debug_server.cpp',
+  'impl/client/debug_client.h',
+  'impl/client/debug_client.cpp',
+  'impl/common/packets.h',
 ]
 
 inc_dir = include_directories(dirs)

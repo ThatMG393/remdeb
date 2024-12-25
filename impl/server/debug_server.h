@@ -1,6 +1,8 @@
 #pragma once
 
-#include "socket.h"
+#include "socket/socket.h"
+#include <cstddef>
+#include <cstdint>
 #include <sys/types.h>
 #include <vector>
 
@@ -8,14 +10,16 @@ typedef std::vector<u_int8_t> bytearray;
 
 class DebugServer {
 public:
-    DebugServer(int port = 8088, int maxConnections = 1, bool nonBlocking = true);
+    DebugServer(uint16_t port = 8088);
 
-    void start();
-    void stop();
+    const void start();
+    const void stop();
 
 private:
     SocketServer server;
 
     bytearray readMemory(u_int32_t address);
     void writeMemory(u_int32_t address, bytearray data);
+
+    void initializePacketHandlers();
 };
