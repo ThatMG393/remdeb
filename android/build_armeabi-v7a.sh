@@ -7,7 +7,7 @@ ABI="armeabi-v7a"
 API_LEVEL="21"
 BUILD_DIR="armv7a-build"
 
-ANDROID_SDK_HOME="/home/ppetraki/Android/Sdk"
+ANDROID_SDK_HOME="$HOME/android-sdk"
 ANDROID_NDK_HOME="${ANDROID_SDK_HOME}/ndk-bundle"
 TOOLCHAIN="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake"
 
@@ -22,7 +22,6 @@ export PATH="${HOST_ROOT}/bin:${PATH}"
 export CMAKE_PREFIX_PATH="${SYS_ROOT}"
 export CMAKE_ROOT="${ANDROID_SDK_HOME}/cmake/3.10.2.4988404"
 export CMAKE_LIBRARY_PATH=${LIB_PATH}
-export CMAKE_INCLUDE_PATH=${INC_PATH}
 
 export CFLAGS="-DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN} \
   -DANDROID_STL=c++_shared \
@@ -33,6 +32,8 @@ export CFLAGS="-DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN} \
 echo "building..."
 echo "Toolchain: ${TOOLCHAIN}"
 
+cd ../
+
 rm -rf ${BUILD_DIR}
 
 meson setup --errorlogs  \
@@ -40,7 +41,10 @@ meson setup --errorlogs  \
   --includedir=${INC_PATH} \
   --libdir=${LIB_PATH} \
   --build.cmake-prefix-path=${SYS_ROOT} \
-  --cross-file ./cross_armeabi-v7a  \
-  ${BUILD_DIR} .
+  --cross-file ./android/cross_armeabi-v7a.ini  \
+  -Dbuild_type='android' \
+  ${BUILD_DIR}
 
 ninja -C ${BUILD_DIR}
+
+cp $ANDROID_NDK_HOME/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a/libc++_shared.so ./armv7a-build

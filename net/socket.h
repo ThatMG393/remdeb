@@ -8,28 +8,19 @@
 #include <memory>
 #include <unordered_map>
 #include <queue>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <string.h>
 
-#ifdef _WIN32
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #pragma comment(lib, "Ws2_32.lib")
-#else
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
-    #include <unistd.h>
-    #include <netdb.h>
-#endif
+using SocketType = int;
+using SockLenType = socklen_t;
+constexpr int INVALID_SOCKET = -1;
+constexpr int SOCKET_ERROR = -1;
 
-#ifdef _WIN32
-    using SocketType = SOCKET;
-    using SockLenType = int;
-#else
-    using SocketType = int;
-    using SockLenType = socklen_t;
-    constexpr int INVALID_SOCKET = -1;
-    constexpr int SOCKET_ERROR = -1;
-#endif
+typedef std::vector<u_int8_t> bytearray;
 
 struct PacketHeader {
     uint16_t type;
@@ -42,8 +33,8 @@ public:
     static constexpr uint16_t Type = 0;
     PayloadType payload;
 
-    std::vector<uint8_t> serialize() const;
-    static Packet<PayloadType> deserialize(const std::vector<uint8_t>& data);
+    bytearray serialize() const;
+    static Packet<PayloadType> deserialize(const bytearray& data);
 };
 
 struct ClientInfo {
@@ -77,8 +68,8 @@ private:
     std::vector<ClientInfo> clients;
     std::mutex clients_mutex;
 
-    std::unordered_map<uint16_t, std::function<void(const std::vector<uint8_t>&)>> handlers;
-    ThreadSafeQueue<std::pair<ClientInfo, std::vector<uint8_t>>> packet_queue;
+    std::unordered_map<uint16_t, std::function<void(const bytearray&)>> handlers;
+    ThreadSafeQueue<std::pair<ClientInfo, bytearray>> packet_queue;
 
     std::unique_ptr<std::thread> accept_thread;
     std::unique_ptr<std::thread> process_thread;
@@ -92,7 +83,7 @@ public:
 
 	template<typename PacketType>
 	void on(std::function<void(const PacketType&)> handler) {
-    	handlers[PacketType::Type] = [handler](const std::vector<uint8_t>& data) {
+    	handlers[PacketType::Type] = [handler](const bytearray& data) {
         	auto packet = PacketType::deserialize(data);
         	handler(packet);
     	};

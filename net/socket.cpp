@@ -1,8 +1,8 @@
 #include "socket.h"
 
 template<typename PayloadType>
-std::vector<uint8_t> Packet<PayloadType>::serialize() const {
-    std::vector<uint8_t> buffer(sizeof(PacketHeader) + sizeof(PayloadType));
+bytearray Packet<PayloadType>::serialize() const {
+    bytearray buffer(sizeof(PacketHeader) + sizeof(PayloadType));
     PacketHeader header{Type, sizeof(PayloadType)};
     
     memcpy(buffer.data(), &header, sizeof(PacketHeader));
@@ -12,7 +12,7 @@ std::vector<uint8_t> Packet<PayloadType>::serialize() const {
 }
 
 template<typename PayloadType>
-Packet<PayloadType> Packet<PayloadType>::deserialize(const std::vector<uint8_t>& data) {
+Packet<PayloadType> Packet<PayloadType>::deserialize(const bytearray& data) {
     Packet<PayloadType> packet;
     memcpy(&packet.payload, data.data() + sizeof(PacketHeader), sizeof(PayloadType));
     return packet;
@@ -34,11 +34,6 @@ bool ThreadSafeQueue<T>::pop(T& item) {
 }
 
 void SocketServer::initialize_socket() {
-    #ifdef _WIN32
-    WSADATA wsaData;
-    WSAStartup(MAKEWORD(2, 2), &wsaData);
-    #endif
-
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == INVALID_SOCKET) return;
 
@@ -47,7 +42,7 @@ void SocketServer::initialize_socket() {
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(config.port);
 
-    bind(server_socket, reinterpret_cast<sockaddr*>(&address), sizeof(address));
+    auto _ = bind(server_socket, reinterpret_cast<sockaddr*>(&address), sizeof(address));
     listen(server_socket, config.max_connections);
 }
 
@@ -84,7 +79,7 @@ void SocketServer::accept_connections() {
 
 void SocketServer::process_packets() {
     while (running) {
-        std::pair<ClientInfo, std::vector<uint8_t>> packet;
+        std::pair<ClientInfo, bytearray> packet;
         if (packet_queue.pop(packet)) {
             PacketHeader header;
             memcpy(&header, packet.second.data(), sizeof(PacketHeader));
@@ -113,12 +108,7 @@ void SocketServer::stop() {
     if (accept_thread) accept_thread->join();
     if (process_thread) process_thread->join();
 
-    #ifdef _WIN32
-    closesocket(server_socket);
-    WSACleanup();
-    #else
     close(server_socket);
-    #endif
 }
 
 SocketServer::~SocketServer() {
