@@ -18,8 +18,10 @@ src_files = [
   'jni/utils/android.h',
 
   'common/starter.h',
-  'common/impl/debug_server.h',
-  'common/impl/debug_server.cpp',
+  'common/server/debug_server.h',
+  'common/server/debug_server.cpp',
+  'common/client/debug_client.h',
+  'common/client/debug_client.cpp',
 ]
 
 inc_dir = include_directories(dirs)

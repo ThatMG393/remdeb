@@ -20,7 +20,7 @@ using SockLenType = socklen_t;
 constexpr int INVALID_SOCKET = -1;
 constexpr int SOCKET_ERROR = -1;
 
-typedef std::vector<u_int8_t> bytearray;
+typedef std::vector<uint8_t> bytearray;
 
 struct PacketHeader {
     uint16_t type;
