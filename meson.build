@@ -36,10 +36,10 @@ message('Here are the build configurations:')
 message(f'  build_shared : @build_shared@')
 message(f'  build_type   : @build_type@')
 
-# pthread = cc.find_library('pthread')
+threads = dependency('threads', required: true)
 jni = dependency('jni', required: build_shared and build_type == 'android')
 
-default_deps = [jni]
+default_deps = [jni, threads]
 
 if build_type == 'android'
   android_ndk = get_option('prefix')
@@ -48,8 +48,9 @@ if build_type == 'android'
 
   android = cc.find_library('android', dirs: android_lib_dir)
   log = cc.find_library('log', dirs: android_lib_dir)
+  cpp_static = cc.find_library('c++_shared', dirs: android_lib_dir, static: true)
 
-  android_deps = [android, log]
+  android_deps = [android, log, cpp_static]
   android_deps += default_deps
 endif
 

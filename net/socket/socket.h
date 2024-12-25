@@ -49,9 +49,11 @@ public:
 	void start();
 	void stop();
 
-	template<typename PacketType, typename Payload>
-	void on(std::function<void(const Payload)> handler) {
-		handlers[PacketType::Type].push_back(
+	template<typename Payload>
+	void on(std::function<void(const Packet<Payload>)> handler) {
+		printf("registering %u", Packet<Payload>::Type);
+		
+		handlers[Packet<Payload>::Type].push_back(
 			[handler](const bytearray& data) {
 				handler(Packet<Payload>::deserialize(data));
 			}

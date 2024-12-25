@@ -17,7 +17,8 @@ const void DebugServer::stop() {
 }
 
 void DebugServer::initializePacketHandlers() {
-	this->server.on<ReadMemPacket, ReadMemPayload>([this](const ReadMemPayload& packet) {
+	this->server.on<ReadMemPayload>([](const Packet<ReadMemPayload> packet) {
 		printf("NO WAY READMEMPACK!");
+		
 	});
 }

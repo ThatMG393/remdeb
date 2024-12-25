@@ -18,7 +18,7 @@ void ClientSocket::processData() {
 		if (headerBuf.size() != sizeof(PacketHeader)) continue;
 
 		PacketHeader header;
-		std::memcpy(&header, headerBuf.data(), sizeof header);
+		std::memcpy(&header, headerBuf.data(), sizeof(PacketHeader));
 
 		bytearray packetBuf(header.size);
 		recv(this->info.clientFd, packetBuf.data(), packetBuf.size(), 0);

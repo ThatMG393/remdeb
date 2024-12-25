@@ -1,3 +1,4 @@
+#include "impl/common/starter.h"
 #include <cstdio>
 #include <jni.h>
 #include <utils/android.h>
@@ -13,8 +14,8 @@ extern "C" {
     		printf("Failed to get JNI Environment!");
     	}
 
-
-
+		Android::Toast::showToast("Starting RemDeb at port 8088!");
+		RemDebMain::startServer();
         return JNI_VERSION_1_6;
     }
 }
