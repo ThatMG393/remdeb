@@ -17,7 +17,7 @@ SocketServer::~SocketServer() {
 }
 
 int SocketServer::on(PacketType type, std::function<void(const Client2ServerPacket)> handler) {
-	Logger::getLogger().info("Registered new handler for Packet with type: " + std::to_string(type));
+	Logger::getLogger()->info("Registered new handler for Packet with type: " + std::to_string(type));
 
 	auto subscribers = handlers[type];
 	int index = subscribers.size();
@@ -35,7 +35,7 @@ void SocketServer::removeOn(PacketType type, int index) {
 
 void SocketServer::start() {
 	if (running.load()) return;
-	Logger::getLogger().info("SocketServer started at port: " + std::to_string(htons(serverSocket->socketInfo.sin_port)));
+	Logger::getLogger()->info("SocketServer started at port: " + std::to_string(htons(serverSocket->socketInfo.sin_port)));
 
 	running.store(true);
 	if (acceptorThread.get() == nullptr) acceptorThread = std::make_unique<std::thread>(&SocketServer::acceptClients, this);
@@ -56,7 +56,7 @@ void SocketServer::broadcast(const Client2ServerPacket packet) {
 void SocketServer::notifyHandlers(const Client2ServerPacket packet) {
 	auto subscribers = handlers[packet.data.header.type];
 
-	Logger::getLogger().info("Notifying " + std::to_string(subscribers.size()) + " listeners for packet with type: " + std::to_string(packet.data.header.type));
+	Logger::getLogger()->info("Notifying " + std::to_string(subscribers.size()) + " listeners for packet with type: " + std::to_string(packet.data.header.type));
 	for (size_t i = 0; i < subscribers.size(); ++i) subscribers[i](packet);
 }
 
@@ -68,7 +68,7 @@ void SocketServer::init() {
 }
 
 void SocketServer::acceptClients() {
-	Logger::getLogger().info("Will now listen for clients.");
+	Logger::getLogger()->info("Will now listen for clients.");
 	while (running.load()) {
 		sockaddr_in clientAddr = { };
 		socklen_t clientAddrLen = sizeof(clientAddr);
@@ -81,7 +81,7 @@ void SocketServer::acceptClients() {
 
 		if (clientFd == INVALID_SOCKET) continue;
 
-		Logger::getLogger().info("Client with Fd " + std::to_string(clientFd) + " connected.");
+		Logger::getLogger()->info("Client with Fd " + std::to_string(clientFd) + " connected.");
 		std::shared_ptr<PacketPollerSocket> client = std::make_shared<PacketPollerSocket>(clientFd, clientAddr);
 		client->onPacket([this, client](const Packet packet) {
 			notifyHandlers({
@@ -90,7 +90,7 @@ void SocketServer::acceptClients() {
 			});
 		});
 		client->onClose([this, client](const int res) {
-			Logger::getLogger().info("Client with Fd " + std::to_string(client->socketFd) + " disconnected.");
+			Logger::getLogger()->info("Client with Fd " + std::to_string(client->socketFd) + " disconnected.");
 			clients.erase(
 				std::remove_if(clients.begin(), clients.end(),
 				[client](const Client& c) {

@@ -22,7 +22,7 @@ Socket::~Socket() {
 		shutdown(socketFd, SHUT_RDWR);
 		close(socketFd);
 
-		Logger::getLogger().info("Successfully disposed socket.");
+		Logger::getLogger()->info("Successfully disposed socket.");
 	}
 }
 
@@ -39,7 +39,7 @@ Socket::Socket(SocketPort port)
 int Socket::sendData(bytearray data) {
 	int res = send(socketFd, data.data(), data.size(), 0);
 	if (res == -1) {
-		Logger::getLogger().warn("Failed to send " + std::to_string(data.size()) + " bytes to SocketFd " + std::to_string(socketFd));
+		Logger::getLogger()->warn("Failed to send " + std::to_string(data.size()) + " bytes to SocketFd " + std::to_string(socketFd));
 	}
 
 	return res;
@@ -50,7 +50,7 @@ int Socket::recieveData(bytearray* buffer, bool waitUntilFullBuf) {
 
 	int res = recv(socketFd, buffer->data(), buffer->size(), waitUntilFullBuf ? MSG_WAITALL : 0);
 	if (res == -1) {
-		Logger::getLogger().warn("Failed to recieve " + std::to_string(buffer->size()) + " bytes from SocketFd " + std::to_string(socketFd));
+		Logger::getLogger()->warn("Failed to recieve " + std::to_string(buffer->size()) + " bytes from SocketFd " + std::to_string(socketFd));
 	}
 
 	return res;

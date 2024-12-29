@@ -63,7 +63,7 @@ public:
 		static_assert(std::is_trivially_copyable_v<T>, "Type must be trivially copyable");
 
 		if (sizeof(T) != data.size()) {
-			Logger::getLogger().error("Error deserializing '" + std::string(typeid(T).name()) + "' because the data size doesn't match! (" + std::to_string(data.size()) + " != " + std::to_string(sizeof(T)) + ")");
+			Logger::getLogger()->error("Error deserializing '" + std::string(typeid(T).name()) + "' because the data size doesn't match! (" + std::to_string(data.size()) + " != " + std::to_string(sizeof(T)) + ")");
 			return std::nullopt;
 		}
 	

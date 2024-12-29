@@ -27,13 +27,13 @@ public:
 };
 
 namespace Logger {
-    inline std::unique_ptr<LogWrapper> lw = std::make_unique<DefaultLogger>();
+    inline std::shared_ptr<LogWrapper> lw = std::make_shared<DefaultLogger>();
 
-    static inline void setWrapper(std::unique_ptr<LogWrapper> newLW) {
-        lw = std::move(newLW);
+    static inline void setWrapper(std::shared_ptr<LogWrapper> newLW) {
+        lw = newLW;
     }
 
-    static inline LogWrapper& getLogger() {
-        return *lw;
+    static inline std::shared_ptr<LogWrapper> getLogger() {
+        return lw;
     }
 }

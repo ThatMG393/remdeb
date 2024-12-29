@@ -7,8 +7,8 @@
 #include <iomanip>
 #include <sstream>
 
-typedef u_int32_t address;
-typedef u_int8_t byte;
+typedef uintptr_t address;
+typedef uint8_t byte;
 
 class MemoryReader {
 private:
@@ -17,7 +17,7 @@ private:
     static address lastFailedAddress;
 
     static void segfault_handler(int sig) {
-		Logger::getLogger().info("Supressed SIGSEGV because of the access attempt to " + intToHex(lastFailedAddress));
+		Logger::getLogger()->warn("Supressed SIGSEGV because of the access attempt to " + intToHex(lastFailedAddress));
 
         canAccessMemory = 0;
         siglongjmp(jump_buffer, 1);

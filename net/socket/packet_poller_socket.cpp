@@ -13,7 +13,7 @@ void PacketPollerSocket::init() {
 }
 
 void PacketPollerSocket::pollPackets() {
-	Logger::getLogger().info("Will now poll packets from SocketFd " + std::to_string(socketFd));
+	Logger::getLogger()->info("Will now poll packets from SocketFd " + std::to_string(socketFd));
 
 	int res;
 
@@ -26,7 +26,7 @@ void PacketPollerSocket::pollPackets() {
 		PacketHeader header;
 		std::memcpy(&header, headerBuf.data(), sizeof(PacketHeader));
 
-		Logger::getLogger().info("Recieved Packet from SocketFd " + std::to_string(socketFd));
+		Logger::getLogger()->info("Recieved Packet from SocketFd " + std::to_string(socketFd));
 
 		bytearray dataBuf(header.size);
 		res = recieveData(&dataBuf);

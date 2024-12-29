@@ -34,5 +34,4 @@
 .cache/
 build/
 b/
-
-armv7a-build/
+build_android/

@@ -1,9 +1,7 @@
 #include "impl/common/starter.h"
 #include "impl/common/logger.h"
+#include "jni/utils/android.h"
 #include <jni.h>
-#include <memory>
-#include <utility>
-#include <utils/android.h>
 #include <android/log.h>
 
 #define REMDEB "RemDeb"
@@ -22,9 +20,10 @@ public:
         __android_log_print(ANDROID_LOG_ERROR, REMDEB, "%s", m.c_str());
     }
 };
+
 extern "C" {
     JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
-		auto logger = std::make_unique<AndroidLogWrapper>();
+		auto logger = std::make_shared<AndroidLogWrapper>();
 
     	if (
     		vm->GetEnv(
@@ -38,8 +37,10 @@ extern "C" {
 		
 		logger->info("HIIIII!");
 
-		Logger::setWrapper(std::move(logger));
+		Logger::setWrapper(logger);
 		RemDebMain::startServer();
+
+		logger->info("okay so we good!");
         return JNI_VERSION_1_6;
     }
 }
