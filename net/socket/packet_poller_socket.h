@@ -1,6 +1,7 @@
 #include "net/packet/packet.h"
 #include "socket.h"
 #include <functional>
+#include <thread>
 #include <vector>
 
 class PacketPollerSocket : public Socket {

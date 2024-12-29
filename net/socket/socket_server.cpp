@@ -1,7 +1,9 @@
 #include "socket_server.h"
 #include "common/logger.h"
 #include <algorithm>
+#include <memory>
 #include <string>
+#include <thread>
 
 SocketServer::SocketServer(ServerConfig config) {
 	serverSocket = std::make_unique<Socket>(config.port);
@@ -79,7 +81,7 @@ void SocketServer::acceptClients() {
 		if (clientFd == INVALID_SOCKET) continue;
 
 		Logger::getLogger().info("Client with Fd " + std::to_string(clientFd) + " connected.");
-		PacketPollerSocket* client = new PacketPollerSocket(clientFd, clientAddr);
+		std::shared_ptr<PacketPollerSocket> client = std::make_shared<PacketPollerSocket>(clientFd, clientAddr);
 		client->onPacket([this, client](const Packet packet) {
 			notifyHandlers({
 				.sender = { .socket = client },

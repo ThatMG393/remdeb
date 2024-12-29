@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <sys/endian.h>
+#include <unistd.h>
 
 Socket::Socket(SocketFd fd, sockaddr_in info, bool autoInit)
 	: socketFd(fd), socketInfo(info) {

@@ -1,7 +1,9 @@
 #include "packet_poller_socket.h"
+#include <memory>
+#include <thread>
 
 struct Client {
-	PacketPollerSocket* socket;
+	std::shared_ptr<PacketPollerSocket> socket;
 };
 
 struct Client2ServerPacket {
