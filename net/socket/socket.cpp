@@ -1,89 +1,72 @@
 #include "socket.h"
-#include <cstring>
+#include "impl/common/logger.h"
+#include "net/packet/packet.h"
+#include <linux/in.h>
+#include <stdexcept>
+#include <string>
 #include <sys/endian.h>
-#include <sys/socket.h>
-#include <thread>
 
-
-ClientSocket::ClientSocket(const ClientInfo info, SocketServer* parent)
- : info(info), parent(parent) {
- 	 this->processThread = std::thread(&ClientSocket::processData, this);
+Socket::Socket(SocketFd fd, sockaddr_in info, bool autoInit)
+	: socketFd(fd), socketInfo(info) {
+	if (autoInit) this->init();
 }
 
-void ClientSocket::processData() {
-	while (this->parent->isRunning()) {
-		bytearray headerBuf(sizeof(PacketHeader));
-		recv(this->info.clientFd, headerBuf.data(), headerBuf.size(), 0);
+Socket::~Socket() {
+	if (socketFd > 0) {
+		shutdown(socketFd, SHUT_RDWR);
+		close(socketFd);
 
-		if (headerBuf.size() != sizeof(PacketHeader)) continue;
-
-		PacketHeader header;
-		std::memcpy(&header, headerBuf.data(), sizeof(PacketHeader));
-
-		bytearray packetBuf(header.size);
-		recv(this->info.clientFd, packetBuf.data(), packetBuf.size(), 0);
-
-		this->parent->_internal_notifyHandlers({ .header = header, .sender = this->info }, packetBuf);
+		Logger::getLogger().info("Successfully disposed socket.");
 	}
 }
 
-SocketServer::SocketServer(const SocketConfig config)
- : config(config) {
-	this->init();
+Socket::Socket(SocketPort port) 
+    : Socket(socket(AF_INET, SOCK_STREAM, 0), [&]() {
+		sockaddr_in addr { };
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(port);
+        addr.sin_addr.s_addr = INADDR_ANY;
+
+        return addr;
+    }()) { }
+
+int Socket::sendData(bytearray data) {
+	int res = send(socketFd, data.data(), data.size(), 0);
+	if (res == -1) {
+		Logger::getLogger().warn("Failed to send " + std::to_string(data.size()) + " bytes to SocketFd " + std::to_string(socketFd));
+	}
+
+	return res;
 }
 
-void SocketServer::start() {
-	if (this->running) return;
+int Socket::recieveData(bytearray* buffer, bool waitUntilFullBuf) {
+	if (buffer->size() <= 0) return -1;
 
-	this->serverThread = std::thread(&SocketServer::handleIncoming, this);	
-	this->running = true;
+	int res = recv(socketFd, buffer->data(), buffer->size(), waitUntilFullBuf ? MSG_WAITALL : 0);
+	if (res == -1) {
+		Logger::getLogger().warn("Failed to recieve " + std::to_string(buffer->size()) + " bytes from SocketFd " + std::to_string(socketFd));
+	}
+
+	return res;
 }
 
-void SocketServer::stop() {
-	if (!this->running) return;
-	this->running = false;
-
-	if (this->serverThread.joinable()) this->serverThread.join();
-}
-
-void SocketServer::init() {
-	this->serverFd = socket(AF_INET, SOCK_STREAM, 0);
-	if (this->serverFd == INVALID_SOCKET) return;
-
-	sockaddr_in address = {};
-	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port = htons(this->config.port);
-	address.sin_family = AF_INET;
-
-	auto _ = bind(this->serverFd, reinterpret_cast<sockaddr*>(&address), sizeof(address));
-	listen(this->serverFd, 1);
-}
-
-void SocketServer::handleIncoming() {
-	while (this->running) {
-		sockaddr_in clientAddr = {};
-		socklen_t clientAddrLen = sizeof(clientAddr);
-
-		SocketFd client = accept(
-			this->serverFd,
-			reinterpret_cast<sockaddr*>(&clientAddr),
-			&clientAddrLen
-		);
-
-		if (client == INVALID_SOCKET) continue;
-
-        this->clients.push_back(ClientSocket({
-            .clientFd = client,
-            .clientAddress = clientAddr
-        }, this));
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+void Socket::verify() {
+	if (socketFd == INVALID_SOCKET) {
+		throw std::logic_error("Failed to create a socket! Error: " + getErrorString());
 	}
 }
 
-void SocketServer::_internal_notifyHandlers(PacketHeaderExt header, bytearray data) {
-	auto subscribers = this->handlers[header.header.type];
-	for (auto subscriber : subscribers) {
-		subscriber(data);
+void Socket::init() {
+	this->verify();
+
+	const int result = 1;
+	setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &result, sizeof(int));
+
+	int res = bind(socketFd, reinterpret_cast<sockaddr*>(const_cast<sockaddr_in*>(&socketInfo)), sizeof(socketInfo));
+	if (res == -1) {
+        throw std::logic_error("Failed to bind socket to port: " + 
+            std::to_string(socketInfo.sin_port) + 
+            " Error: " + getErrorString());
 	}
 }
+

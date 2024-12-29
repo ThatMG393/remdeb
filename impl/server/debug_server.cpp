@@ -1,11 +1,11 @@
 #include "debug_server.h"
+#include "impl/common/logger.h"
 #include "impl/common/packets.h"
-#include "socket/socket.h"
-#include <cstdio>
+#include "impl/common/memory.h"
 
 DebugServer::DebugServer(uint16_t port)
  : server(SocketServer({ .port = port })) {
-	initializePacketHandlers();
+	this->initializePacketHandlers();
 }
 
 const void DebugServer::start() {
@@ -17,8 +17,23 @@ const void DebugServer::stop() {
 }
 
 void DebugServer::initializePacketHandlers() {
-	this->server.on<ReadMemPayload>([](const Packet<ReadMemPayload> packet) {
-		printf("NO WAY READMEMPACK!");
+	this->server.on(C2S::ReadMemPacketType, [](const Client2ServerPacket packet) {
+		Logger::getLogger().info("ReadMemPacket recieved!");
+		C2S::ReadMemPayload payload = packet.data.deserialize<C2S::ReadMemPayload>().value();
+		Logger::getLogger().info("Reading -> " + MemoryReader::intToHex(payload.address));
 		
+		packet.sender.socket->sendData(
+			Packet::wrap<S2C::ReadMemPayload>(
+				S2C::ReadMemPacketType,
+				{ .data = net_bytearray(MemoryReader::readBytes(payload.address, 1).value_or(bytearray({1, 0, 1}))) }
+			).serialize()
+		);
+	});
+
+	this->server.on(C2S::WriteMemPacketType, [](const Client2ServerPacket packet) {
+		Logger::getLogger().info("WriteMemPacket recieved!");
+		auto payload = packet.data.deserialize<C2S::WriteMemPayload>();
+
+		packet.sender.socket->sendData(bytearray());
 	});
 }

@@ -1,26 +1,24 @@
 #pragma once
 
-#include "socket/socket.h"
-#include "packet/packet.h"
-#include <vector>
+#include "net/packet/packet.h"
+#include "memory.h"
 
-typedef std::vector<u_int8_t> bytearray;
+namespace C2S { // <32767
+    static PacketType ReadMemPacketType = 1; 	
+	PACKED_STRUCT ReadMemPayload {
+		address address;
+	};
 
-struct ReadMemPayload {
-	u_int32_t address;
-};
+   	static PacketType WriteMemPacketType = 2;
+	PACKED_STRUCT WriteMemPayload {
+		address address;
+		net_bytearray data;
+	};
+}
 
-struct WriteMemPayload {
-	u_int32_t address;
-	bytearray data;
-};
-
-class ReadMemPacket : Packet<ReadMemPayload> {
-public:
-	static constexpr PacketType Type = 1;
-};
-
-class WriteMemPacket : Packet<WriteMemPayload> {
-public:
-	static constexpr PacketType Type = 2;
-};
+namespace S2C { // >32767
+   	static PacketType ReadMemPacketType = 32767;
+	PACKED_STRUCT ReadMemPayload {
+		net_bytearray data;
+	};
+}

@@ -1,83 +1,41 @@
 #pragma once
 
-#include "packet/packet.h"
-#include <netinet/in.h>
+#include "net/packet/packet.h"
 #include <atomic>
+#include <cstring>
 #include <functional>
+#include <memory>
+#include <netinet/in.h>
+#include <optional>
+#include <string>
+#include <sys/socket.h>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
-typedef std::vector<u_int8_t> bytearray;
-typedef u_int16_t PacketType;
+typedef u_int16_t SocketPort;
+typedef u_int32_t DataLength;
 typedef int SocketFd;
 
-const SocketFd INVALID_SOCKET = -1;
-const SocketFd ERRORED_SOCKET = -1;
+static SocketFd INVALID_SOCKET = -1;
 
-struct ClientInfo {
-	SocketFd clientFd;
-	sockaddr_in clientAddress;
-};
-
-struct SocketConfig {
-	u_int16_t port;
-};
-
-struct PacketHeaderExt {
-	PacketHeader header;
-	ClientInfo sender;
-};
-
-class SocketServer;
-class ClientSocket {
+class Socket {
 public:
-	const ClientInfo info;
-	
-	SocketServer* parent;
-	std::thread processThread;
+	Socket(SocketPort);
+	Socket(SocketFd, sockaddr_in, bool = true);
+	virtual ~Socket();
 
-	ClientSocket(const ClientInfo, SocketServer* parent);
+	const SocketFd socketFd;
+	const sockaddr_in socketInfo;
 
-private:
-	void processData();
+	int sendData(bytearray);
+	int recieveData(bytearray*, bool = true);
+
+protected:
+	void verify();
+	virtual void init();
 };
 
-class SocketServer {
-public:
-	SocketServer(const SocketConfig);
-
-	void start();
-	void stop();
-
-	template<typename Payload>
-	void on(std::function<void(const Packet<Payload>)> handler) {
-		printf("registering %u", Packet<Payload>::Type);
-		
-		handlers[Packet<Payload>::Type].push_back(
-			[handler](const bytearray& data) {
-				handler(Packet<Payload>::deserialize(data));
-			}
-		);
-	}
-
-	bool isRunning() const {
-		return running;
-	}
-
-	void _internal_notifyHandlers(PacketHeaderExt header, bytearray data);
-	
-private:
-	const SocketConfig config;
-
-	std::atomic<bool> running{false};
-	std::vector<ClientSocket> clients;
-	std::unordered_map<PacketType, std::vector<std::function<void(const bytearray&)>>> handlers;
-
-	std::thread serverThread;
-
-	SocketFd serverFd;
-
-	void init();
-	void handleIncoming();
-	void processData();
-};
+static std::string getErrorString() {
+	return std::string(strerror(errno));
+}

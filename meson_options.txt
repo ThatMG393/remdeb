@@ -1,2 +1,29 @@
-option('build_type', type: 'combo', choices: ['normal', 'android'], value: 'normal')
-option('build_shared', type: 'boolean', value: true, description: 'Build as shared library')
+option(
+  'build_type',
+  type: 'combo',
+  choices: ['normal', 'android'],
+  value: 'normal',
+  description: 'Build for Linux or for Android'
+)
+
+option(
+  'build_executable',
+  type: 'boolean',
+  value: false,
+  description: 'Build an executable alongside thd shared library.'
+)
+
+option(
+  'ndk_root',
+  type: 'string',
+  value: '',
+  description: 'NDK root to use in building'
+)
+
+option(
+  'android_arch',
+  type: 'combo',
+  choices: ['arm', 'aarch64'],
+  value: 'aarch64',
+  description: 'The Android architecture to build for'
+)

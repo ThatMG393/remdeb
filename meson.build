@@ -1,68 +1,86 @@
 project('remdeb', 'cpp', 'java',
-  version: '1.0',
-  default_options: ['cpp_std=c++17'])
+ version: '1.0',
+ default_options: ['cpp_std=c++17'])
 
 cc = meson.get_compiler('cpp')
 
-libdir = meson.current_source_dir() + './lib/'
+sources = {
+ 'common': [
+   'net/socket/socket.h',
+   'net/socket/socket.cpp',
+   'net/socket/socket_server.h',
+   'net/socket/socket_server.cpp',
+   'net/socket/packet_poller_socket.h',
+   'net/socket/packet_poller_socket.cpp',
+   'net/packet/packet.h',
+   'impl/common/starter.h',
+   'impl/server/debug_server.h',
+   'impl/server/debug_server.cpp',
+   'impl/client/debug_client.h',
+   'impl/client/debug_client.cpp',
+   'impl/common/packets.h',
+ ],
+ 'android': ['jni/loader.cpp', 'jni/utils/android.h'],
+ 'standalone': ['src/main.cpp']
+}
 
-dirs = ['src', 'net', 'jni', 'impl']
-
-src_files = [
-  'src/main.cpp',
-
-  'net/socket/socket.h',
-  'net/socket/socket.cpp',
-  'net/packet/packet.h',
-
-  'jni/loader.cpp',
-  'jni/utils/android.h',
-
-  'impl/common/starter.h',
-  'impl/server/debug_server.h',
-  'impl/server/debug_server.cpp',
-  'impl/client/debug_client.h',
-  'impl/client/debug_client.cpp',
-  'impl/common/packets.h',
-]
-
-inc_dir = include_directories(dirs)
-inc_dirs = [inc_dir]
+include_dirs = ['net', 'impl']
 
 build_type = get_option('build_type')
-build_shared = get_option('build_shared') or build_type == 'android'
+build_executable = get_option('build_executable')
 
-message('Here are the build configurations:')
-message(f'  build_shared : @build_shared@')
-message(f'  build_type   : @build_type@')
-
-threads = dependency('threads', required: true)
-jni = dependency('jni', required: build_shared and build_type == 'android')
-
-default_deps = [jni, threads]
+deps = [dependency('threads')]
+link_args = []
+src_files = sources['common']
 
 if build_type == 'android'
-  android_ndk = get_option('prefix')
-  android_lib_dir = get_option('libdir').split(':')
-  android_include_dir = get_option('includedir').split(':')
+ ndk_root = get_option('ndk_root')
+ android_arch = get_option('android_arch')
+ android_api = 21
 
-  android = cc.find_library('android', dirs: android_lib_dir)
-  log = cc.find_library('log', dirs: android_lib_dir)
-  cpp_static = cc.find_library('c++_shared', dirs: android_lib_dir, static: true)
+ if ndk_root == '' or android_arch == ''
+   error('Missing NDK options. Use: -Dndk_root=... -Dandroid_arch=...')
+ endif
 
-  android_deps = [android, log, cpp_static]
-  android_deps += default_deps
+ sysroot = '@0@/toolchains/llvm/prebuilt/linux-@1@/sysroot'.format(ndk_root, host_machine.cpu_family())
+ abi = android_arch == 'arm' ? 'armeabi-v7a' : 'arm64-v8a'
+ 
+ lib_dirs = [
+   '@0@/usr/lib/@1@-linux-androideabi'.format(sysroot, android_arch),
+   '@0@/usr/lib/@1@-linux-androideabi/@2@'.format(sysroot, android_arch, android_api),
+   '@0@/sources/cxx-stl/llvm-libc++/libs/@1@'.format(ndk_root, abi)
+ ]
+
+ deps += [
+   dependency('jni'),
+   cc.find_library('android', dirs: lib_dirs),
+   cc.find_library('log', dirs: lib_dirs),
+   cc.find_library('c', dirs: lib_dirs),
+   cc.find_library('dl', dirs: lib_dirs),
+   cc.find_library('m', dirs: lib_dirs),
+   cc.find_library('c++_static', dirs: lib_dirs, static: true)
+ ]
+
+ link_args += [
+   '-static-libstdc++',
+   '-Wl,--whole-archive',
+   '@0@/libc++_static.a'.format(lib_dirs[2]),
+   '-Wl,--no-whole-archive'
+ ]
+
+ include_dirs += ['jni']
+ src_files += sources['android']
 endif
 
-if build_shared
-  if build_type == 'android'
-    shared_library('remdeb', src_files,
-      dependencies: android_deps, include_directories: inc_dirs)
-  else
-    shared_library('remdeb', src_files,
-      dependencies: default_deps, include_directories: inc_dirs)
-  endif
-else
-  executable('remdeb', src_files,
-    dependencies: default_deps, include_directories: inc_dirs)
+lib = shared_library('remdeb', src_files,
+   include_directories: include_directories(include_dirs),
+   dependencies: deps,
+   link_args: link_args)
+ 
+if build_executable
+  executable(
+    'remdeb_app',
+    sources['standalone'],
+    link_with: lib
+  )
 endif
