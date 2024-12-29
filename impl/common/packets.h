@@ -6,12 +6,12 @@
 namespace C2S { // <32767
     static PacketType ReadMemPacketType = 1; 	
 	PACKED_STRUCT ReadMemPayload {
-		address address;
+		address mem_address;
 	};
 
    	static PacketType WriteMemPacketType = 2;
 	PACKED_STRUCT WriteMemPayload {
-		address address;
+		address mem_address;
 		net_bytearray data;
 	};
 }

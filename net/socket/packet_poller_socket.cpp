@@ -24,7 +24,7 @@ void PacketPollerSocket::pollPackets() {
 		if (res == -1) continue;
 
 		PacketHeader header;
-		memcpy(&header, headerBuf.data(), sizeof(PacketHeader));
+		std::memcpy(&header, headerBuf.data(), sizeof(PacketHeader));
 
 		Logger::getLogger().info("Recieved Packet from SocketFd " + std::to_string(socketFd));
 

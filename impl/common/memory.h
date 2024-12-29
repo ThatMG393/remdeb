@@ -2,12 +2,10 @@
 
 #include "net/packet/packet.h"
 #include "impl/common/logger.h"
+#include <csetjmp>
+#include <csignal>
 #include <iomanip>
-#include <optional>
 #include <sstream>
-#include <signal.h>
-#include <setjmp.h>
-#include <android/log.h>
 
 typedef u_int32_t address;
 typedef u_int8_t byte;
@@ -46,7 +44,7 @@ public:
         if (sigsetjmp(jump_buffer, 1) == 0) {
             canAccessMemory = 1;
             bytearray bytes(count);
-            memcpy(bytes.data(), reinterpret_cast<void*>(addr), count);
+            std::memcpy(bytes.data(), reinterpret_cast<void*>(addr), count);
             return bytes;
         }
 

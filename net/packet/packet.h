@@ -3,6 +3,7 @@
 #include "impl/common/logger.h"
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <optional>
 #include <string>
 #include <vector>
@@ -50,7 +51,7 @@ public:
 
 	bytearray serialize() const {
 		bytearray serializedHeader(sizeof(PacketHeader));
-		memcpy(serializedHeader.data(), &header, serializedHeader.size());
+		std::memcpy(serializedHeader.data(), &header, serializedHeader.size());
 
 		serializedHeader.insert(serializedHeader.end(), data.begin(), data.end());
 		return serializedHeader;
@@ -67,7 +68,7 @@ public:
 		}
 	
 		T dataStruct;
-		memcpy(&dataStruct, data.data(), sizeof(T));
+		std::memcpy(&dataStruct, data.data(), sizeof(T));
 
 		return dataStruct;
 	}

@@ -16,12 +16,12 @@ mv cmdline-tools $CMDTOOLS_LOC
 
 echo "export ANDROID_SDK_ROOT=$SDK_LOC" >> $HOME/.bashrc
 echo "export ANDROID_HOME=$SDK_LOC" >> $HOME/.bashrc
-echo "export PATH=$PATH:$CMDTOOLS_LOC/cmdline-tools/bin" >> $HOME/.bashrc
+echo "export PATH=\$PATH:$CMDTOOLS_LOC/cmdline-tools/bin" >> $HOME/.bashrc
 
 source $HOME/.bashrc
 
 run_sdk() {
-    sdkmanager --sdk_root=$SDK_LOC $*
+    $CMDTOOLS_LOC/cmdline-tools/bin/sdkmanager --sdk_root=$SDK_LOC $*
 }
 
 run_sdk --list

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "server/debug_server.h"
+#include "impl/server/debug_server.h"
 
 namespace RemDebMain {
     static DebugServer* startServer(int port = 8088) {

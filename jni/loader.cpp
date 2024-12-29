@@ -1,5 +1,5 @@
-#include "common/starter.h"
-#include "common/logger.h"
+#include "impl/common/starter.h"
+#include "impl/common/logger.h"
 #include <jni.h>
 #include <memory>
 #include <utility>

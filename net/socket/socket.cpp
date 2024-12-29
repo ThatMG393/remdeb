@@ -4,8 +4,13 @@
 #include <linux/in.h>
 #include <stdexcept>
 #include <string>
-#include <sys/endian.h>
 #include <unistd.h>
+
+#ifdef __APPLE__
+#include <machine/endian.h>
+#else
+#include <sys/types.h>
+#endif
 
 Socket::Socket(SocketFd fd, sockaddr_in info, bool autoInit)
 	: socketFd(fd), socketInfo(info) {

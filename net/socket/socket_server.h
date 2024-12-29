@@ -1,4 +1,5 @@
 #include "packet_poller_socket.h"
+#include <atomic>
 #include <memory>
 #include <thread>
 
