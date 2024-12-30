@@ -83,7 +83,8 @@ void SocketServer::acceptClients() {
 
 		Logger::getLogger()->info("Client with Fd " + std::to_string(clientFd) + " connected.");
 		std::shared_ptr<PacketPollerSocket> client = std::make_shared<PacketPollerSocket>(clientFd, clientAddr);
-		client->onPacket([this, client](const Packet packet) {
+		client->onAnyPacket([this, client](const Packet packet) {
+			Logger::getLogger()->info("Recieved packet with type " + std::to_string(packet.header.type) + " from Socket with Fd " + std::to_string(client->socketFd));
 			notifyHandlers({
 				.sender = { .socket = client },
 				.data = packet

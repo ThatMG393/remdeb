@@ -12,6 +12,16 @@
 #include <sys/types.h>
 #endif
 
+Socket::Socket(SocketPort port, bool autoInit) 
+    : Socket(socket(AF_INET, SOCK_STREAM, 0), [&]() {
+		sockaddr_in addr { };
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(port);
+        addr.sin_addr.s_addr = INADDR_ANY;
+
+        return addr;
+    }(), autoInit) { }
+
 Socket::Socket(SocketFd fd, sockaddr_in info, bool autoInit)
 	: socketFd(fd), socketInfo(info) {
 	if (autoInit) this->init();
@@ -25,16 +35,6 @@ Socket::~Socket() {
 		Logger::getLogger()->info("Successfully disposed socket.");
 	}
 }
-
-Socket::Socket(SocketPort port) 
-    : Socket(socket(AF_INET, SOCK_STREAM, 0), [&]() {
-		sockaddr_in addr { };
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(port);
-        addr.sin_addr.s_addr = INADDR_ANY;
-
-        return addr;
-    }()) { }
 
 int Socket::sendData(bytearray data) {
 	int res = send(socketFd, data.data(), data.size(), 0);

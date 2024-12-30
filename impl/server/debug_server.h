@@ -4,7 +4,7 @@
 
 class DebugServer {
 public:
-    DebugServer(uint16_t port = 8088);
+    DebugServer(uint16_t = 8088);
 
     const void start();
     const void stop();

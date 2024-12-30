@@ -17,25 +17,29 @@ const void DebugServer::stop() {
 }
 
 void DebugServer::initializePacketHandlers() {
+	this->server.on(C2S::GetBaseAddressPacketType, [](const Client2ServerPacket packet) {
+		Logger::getLogger()->info("Recieved a 'hello' packet!");
+		packet.sender.socket->sendData(
+			Packet::wrap<S2C::GetBaseAddressPayload>(
+				S2C::GetBaseAddressPacketType,
+				{ .base_address = MemoryReader::getProcessBaseAddress() }
+			).serialize()
+		);
+		Logger::getLogger()->info("Successfully replied back!");
+	});
+
 	this->server.on(C2S::ReadMemPacketType, [](const Client2ServerPacket packet) {
 		Logger::getLogger()->info("ReadMemPacket recieved!");
-		C2S::ReadMemPayload payload = packet.data.deserialize<C2S::ReadMemPayload>().value();
+		C2S::ReadMemPayload payload = packet.data.deserialize<C2S::ReadMemPayload>();
+
 		Logger::getLogger()->info("Reading -> " + MemoryReader::intToHex(payload.mem_address));
 		
 		packet.sender.socket->sendData(
 			Packet::wrap<S2C::ReadMemPayload>(
 				S2C::ReadMemPacketType,
-				{ .data = net_bytearray(MemoryReader::readBytes(payload.mem_address, 1).value_or(bytearray({1, 0, 1}))) }
+				{ .data = net_bytearray(bytearray({255, 69})) }
 			).serialize()
 		);
+		Logger::getLogger()->info("Sent reply!");
 	});
-
-	this->server.on(C2S::WriteMemPacketType, [](const Client2ServerPacket packet) {
-		Logger::getLogger()->info("WriteMemPacket recieved!");
-		auto _ = packet.data.deserialize<C2S::WriteMemPayload>();
-
-		packet.sender.socket->sendData(bytearray());
-	});
-
-	stop();
 }

@@ -5,10 +5,12 @@
 #include <csetjmp>
 #include <csignal>
 #include <iomanip>
+#include <optional>
 #include <sstream>
+#include <inttypes.h>
+#include <string>
 
 typedef uintptr_t address;
-typedef uint8_t byte;
 
 class MemoryReader {
 private:
@@ -25,16 +27,8 @@ private:
 
 public:
     static std::optional<byte> readByte(address addr) {
-        lastFailedAddress = addr;
-        signal(SIGSEGV, segfault_handler);
-        
-        if (sigsetjmp(jump_buffer, 1) == 0) {
-            canAccessMemory = 1;
-            return *reinterpret_cast<byte*>(addr);
-        }
-        
-        signal(SIGSEGV, SIG_DFL);
-        return std::nullopt;
+    	auto b = readBytes(addr, 1);
+    	return (b.has_value()) ? std::optional<byte>(b->at(0)) : std::nullopt;
     }
 
     static std::optional<bytearray> readBytes(address addr, size_t count) {
@@ -45,6 +39,7 @@ public:
             canAccessMemory = 1;
             bytearray bytes(count);
             std::memcpy(bytes.data(), reinterpret_cast<void*>(addr), count);
+			Logger::getLogger()->info(std::to_string(bytes.size()));
             return bytes;
         }
 
@@ -74,9 +69,24 @@ public:
     static address getLastFailedAddress() {
         return lastFailedAddress;
     }
+
+	static address getProcessBaseAddress() {
+#ifdef __ANDROID__
+    	FILE* fp = fopen("/proc/self/maps", "r");
+    	if (!fp) return 0;
+    	
+    	address baseAddr;
+    	fscanf(fp, "%" SCNxPTR, &baseAddr);
+    	fclose(fp);
+    	return baseAddr;
+#else
+	    dl_phdr_info info;
+	    dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &info);
+	    return info.dlpi_addr;
+#endif
+	}
 };
 
-// Static member definitions
 inline sigjmp_buf MemoryReader::jump_buffer;
 inline volatile sig_atomic_t MemoryReader::canAccessMemory = 0;
 inline address MemoryReader::lastFailedAddress = 0;

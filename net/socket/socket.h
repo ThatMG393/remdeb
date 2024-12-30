@@ -14,7 +14,7 @@ static SocketFd INVALID_SOCKET = -1;
 
 class Socket {
 public:
-	Socket(SocketPort);
+	Socket(SocketPort, bool = true);
 	Socket(SocketFd, sockaddr_in, bool = true);
 	virtual ~Socket();
 
